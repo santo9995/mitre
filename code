@@ -1,0 +1,94 @@
+import joblib
+import re
+import nltk
+import numpy as np
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+# from tkinter import messagebox
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate
+
+def send_email(subject,message):
+    from_email = 'securewithme1291@gmail.com'
+    password = 'Achu@120591'
+    
+    to_email = 'santhoshc.999@gmail.com'
+    
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['subject'] = subject
+    msg ['Date'] = formatdate(Localtime=True)
+    
+    msg.attach(MIMEText(message, 'plain'))
+    server =smtplibSMTP('smtp.gmail.com',587)
+    server.starttls()
+    sever.login(from_email, password)
+    sever.sendmail(from_email, to_email, msg.as_string())
+    sever.quit()
+    
+# Load the dumped models
+
+regressor = joblib.load('random_forest_model.joblib')
+cv = joblib.load('count_vectorizer.joblib')
+
+# Function to Clean the texts
+def preprocess_text(text):
+    log = re.sub('[^a-zA-Z0-9]', ' ', text)
+    log = log.lower()
+    log = log.split()
+    ps = PorterStemmer()
+    log = [ps.stem(word) for word in log if not word in set(stopwords.words('english'))]
+    log = ' '.join(log)
+    return log
+
+# Mapping of predictions to respective types
+prediction_types = {
+    0: "Credential Access"
+    1: "Privilege Escalation",
+    2: "Execution",
+    3: "Resource Development"
+}
+def read_file_line_by_line(filename):
+    try:
+        with open(filename,'r') as file:
+            for line in file:
+                yield line.strip()
+    except FileNotFoundError:
+        print(f"File '{filename}' nt found.")
+    except Exception as e:
+        print(f"An error occured: {str(e)}")
+        
+# List of filenames you want to process
+file_names = ['auth.log', 'syslog', 'log.txt']
+
+email_subject = "User Activity detection according to the MITRE ATTACK"
+
+email_message = "Identified Types \n\nCredential Access: This type involves techniques and methods"
+
+# loop through the list of filenames and read each file line by line
+for file_name in filenames:
+    #print(f"Reading lines from '{file_name}':"
+    for line in read_file_line_by_line(file_name):
+        #print(line)
+        new_text = str(line)
+        # New data insert
+        #new_text = input("Enter the log Here:")
+        #print(new_text)
+        preprocessed_text = preprocess_text(new_text)
+        # Use the loaded CountVectorizer object to transform the preprocessed text.
+        new_text_bow = cv.transform([preprocessed_text]).toarray()
+        # Make predictions using the loaded model
+        predictions= regressor.predict(new_text_bow)
+        rounded_predictions = np.round(predictions)
+        predicted_type = prediction_types[int(rounded_predictions[0])]
+        email_message +=predicted_type +"\n"
+        
+#print(email_message)
+if send_email(email_subject, email_message):
+    print("Email Sent")
+else
+    print("Email Sent")
